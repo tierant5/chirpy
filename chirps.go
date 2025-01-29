@@ -17,6 +17,16 @@ type Chirp struct {
 	UserID    uuid.UUID `json:"user_id"`
 }
 
+type Chirps []Chirp
+
+func (c Chirps) mapDBType(d *[]database.Chirp) {
+	chirp := Chirp{}
+	for i, dbChirp := range *d {
+		chirp.mapDBType(&dbChirp)
+		c[i] = chirp
+	}
+}
+
 func (c *Chirp) mapDBType(d *database.Chirp) {
 	c.ID = d.ID
 	c.CreatedAt = d.CreatedAt
@@ -25,7 +35,7 @@ func (c *Chirp) mapDBType(d *database.Chirp) {
 	c.UserID = d.UserID
 }
 
-func (cfg *apiConfig) handleChirps(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) handleCreateChirp(w http.ResponseWriter, r *http.Request) {
 	var chirp Chirp
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&chirp)
@@ -50,4 +60,15 @@ func (cfg *apiConfig) handleChirps(w http.ResponseWriter, r *http.Request) {
 	}
 	chirp.mapDBType(&dbChirp)
 	respondWithJSON(w, 201, chirp)
+}
+
+func (cfg *apiConfig) handleGetChirps(w http.ResponseWriter, r *http.Request) {
+	dbChirps, err := cfg.dbQueries.GetAllChirps(r.Context())
+	if err != nil {
+		msg := "Error getting Chirps from database"
+		respondWithError(w, 400, msg, err)
+	}
+	chirps := make(Chirps, len(dbChirps))
+	chirps.mapDBType(&dbChirps)
+	respondWithJSON(w, 200, chirps)
 }
