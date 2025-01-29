@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -71,4 +72,20 @@ func (cfg *apiConfig) handleGetChirps(w http.ResponseWriter, r *http.Request) {
 	chirps := make(Chirps, len(dbChirps))
 	chirps.mapDBType(&dbChirps)
 	respondWithJSON(w, 200, chirps)
+}
+
+func (cfg *apiConfig) handleGetChirpByID(w http.ResponseWriter, r *http.Request) {
+	chirpID, err := uuid.Parse(r.PathValue("chirpID"))
+	if err != nil {
+		msg := "Error parsing chirpID"
+		respondWithError(w, 400, msg, err)
+	}
+	dbChirp, err := cfg.dbQueries.GetChirpByID(r.Context(), chirpID)
+	if err != nil {
+		msg := fmt.Sprintf("Error getting chirpID: %v from the database", chirpID)
+		respondWithError(w, 404, msg, err)
+	}
+	chirp := Chirp{}
+	chirp.mapDBType(&dbChirp)
+	respondWithJSON(w, 200, chirp)
 }
