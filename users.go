@@ -16,7 +16,7 @@ type User struct {
 	Email     string    `json:"email"`
 }
 
-func (u *User) mapDBUser(d *database.User) {
+func (u *User) mapDBType(d *database.User) {
 	u.ID = d.ID
 	u.CreatedAt = d.CreatedAt
 	u.UpdatedAt = d.UpdatedAt
@@ -38,6 +38,6 @@ func (cfg *apiConfig) handleUsers(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, 400, msg, err)
 		return
 	}
-	user.mapDBUser(&dbUser)
+	user.mapDBType(&dbUser)
 	respondWithJSON(w, 201, user)
 }
