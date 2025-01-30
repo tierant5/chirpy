@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/tierant5/chirpy/internal/auth"
 	"github.com/tierant5/chirpy/internal/database"
 )
 
@@ -14,9 +15,24 @@ type User struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	Email     string    `json:"email"`
+	Password  string    `json:"password"`
+}
+
+type AuthUser struct {
+	ID        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Email     string    `json:"email"`
 }
 
 func (u *User) mapDBType(d *database.User) {
+	u.ID = d.ID
+	u.CreatedAt = d.CreatedAt
+	u.UpdatedAt = d.UpdatedAt
+	u.Email = d.Email
+}
+
+func (u *AuthUser) mapDBType(d *database.User) {
 	u.ID = d.ID
 	u.CreatedAt = d.CreatedAt
 	u.UpdatedAt = d.UpdatedAt
@@ -32,7 +48,16 @@ func (cfg *apiConfig) handleUsers(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, 400, msg, err)
 		return
 	}
-	dbUser, err := cfg.dbQueries.CreateUser(r.Context(), user.Email)
+	hashedPassword, err := auth.HashPassword(user.Password)
+	if err != nil {
+		msg := "Error creating hashedPassword"
+		respondWithError(w, 400, msg, err)
+		return
+	}
+	dbUser, err := cfg.dbQueries.CreateUser(r.Context(), database.CreateUserParams{
+		Email:          user.Email,
+		HashedPassword: hashedPassword,
+	})
 	if err != nil {
 		msg := "Error creating user in database"
 		respondWithError(w, 400, msg, err)

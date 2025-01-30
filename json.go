@@ -32,3 +32,8 @@ func respondWithError(w http.ResponseWriter, code int, msg string, err error) {
 		Error: msg,
 	})
 }
+
+func respondUnauthorized(w http.ResponseWriter, err error) {
+	msg := "Incorrect email or password"
+	respondWithError(w, 401, msg, err)
+}
