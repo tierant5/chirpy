@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/tierant5/chirpy/internal/auth"
 	"github.com/tierant5/chirpy/internal/database"
 )
 
@@ -37,9 +38,22 @@ func (c *Chirp) mapDBType(d *database.Chirp) {
 }
 
 func (cfg *apiConfig) handleCreateChirp(w http.ResponseWriter, r *http.Request) {
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		msg := "token not found"
+		respondWithError(w, 400, msg, err)
+		return
+	}
+	userID, err := auth.ValidateJWT(token, cfg.signingToken)
+	if err != nil {
+		msg := "invalid token"
+		respondWithError(w, 401, msg, err)
+		return
+	}
+
 	var chirp Chirp
 	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&chirp)
+	err = decoder.Decode(&chirp)
 	if err != nil {
 		msg := "Error decoding body"
 		respondWithError(w, 400, msg, err)
@@ -51,7 +65,7 @@ func (cfg *apiConfig) handleCreateChirp(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	dbChirp, err := cfg.dbQueries.CreateChirp(r.Context(), database.CreateChirpParams{
-		UserID: chirp.UserID,
+		UserID: userID,
 		Body:   cleanedBody,
 	})
 	if err != nil {

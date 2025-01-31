@@ -16,12 +16,14 @@ type apiConfig struct {
 	fileserverHits atomic.Int32
 	dbQueries      *database.Queries
 	platform       string
+	signingToken   string
 }
 
 func main() {
 	godotenv.Load()
 	dbURL := os.Getenv("DB_URL")
 	platform := os.Getenv("PLATFORM")
+	signingToken := os.Getenv("SIGNING_TOKEN")
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		log.Fatal(err)
@@ -29,8 +31,9 @@ func main() {
 	const filepathRoot = "."
 	const port = "8080"
 	apiCfg := apiConfig{
-		dbQueries: database.New(db),
-		platform:  platform,
+		dbQueries:    database.New(db),
+		platform:     platform,
+		signingToken: signingToken,
 	}
 
 	mux := http.NewServeMux()
