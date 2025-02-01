@@ -41,7 +41,7 @@ func (u *AuthUser) mapDBType(d *database.User) {
 	u.Email = d.Email
 }
 
-func (cfg *apiConfig) handleUsers(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) handleUsersPost(w http.ResponseWriter, r *http.Request) {
 	var user User
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&user)
@@ -67,4 +67,48 @@ func (cfg *apiConfig) handleUsers(w http.ResponseWriter, r *http.Request) {
 	}
 	user.mapDBType(&dbUser)
 	respondWithJSON(w, 201, user)
+}
+
+func (cfg *apiConfig) handleUsersPut(w http.ResponseWriter, r *http.Request) {
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		msg := "token not found"
+		respondWithError(w, 401, msg, err)
+		return
+	}
+	userID, err := auth.ValidateJWT(token, cfg.signingToken)
+	if err != nil {
+		msg := "invalid token"
+		respondWithError(w, 401, msg, err)
+		return
+	}
+
+	var user User
+	decoder := json.NewDecoder(r.Body)
+	err = decoder.Decode(&user)
+	if err != nil {
+		msg := "Could not decode request body"
+		respondWithError(w, 400, msg, err)
+		return
+	}
+
+	hashedPassword, err := auth.HashPassword(user.Password)
+	if err != nil {
+		msg := "Error creating hashedPassword"
+		respondWithError(w, 400, msg, err)
+		return
+	}
+
+	dbUser, err := cfg.dbQueries.UpdateUserEmailPassword(r.Context(), database.UpdateUserEmailPasswordParams{
+		ID:             userID,
+		Email:          user.Email,
+		HashedPassword: hashedPassword,
+	})
+	if err != nil {
+		msg := "Error updating user in database"
+		respondWithError(w, 400, msg, err)
+		return
+	}
+	user.mapDBType(&dbUser)
+	respondWithJSON(w, 200, user)
 }
