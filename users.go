@@ -11,20 +11,20 @@ import (
 )
 
 type User struct {
-	ID               uuid.UUID `json:"id"`
-	CreatedAt        time.Time `json:"created_at"`
-	UpdatedAt        time.Time `json:"updated_at"`
-	Email            string    `json:"email"`
-	Password         string    `json:"password"`
-	ExpiresInSeconds string    `json:"expires_in_seconds"`
-}
-
-type AuthUser struct {
 	ID        uuid.UUID `json:"id"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	Email     string    `json:"email"`
-	Token     string    `json:"token"`
+	Password  string    `json:"password"`
+}
+
+type AuthUser struct {
+	ID           uuid.UUID `json:"id"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+	Email        string    `json:"email"`
+	Token        string    `json:"token"`
+	RefreshToken string    `json:"refresh_token"`
 }
 
 func (u *User) mapDBType(d *database.User) {
