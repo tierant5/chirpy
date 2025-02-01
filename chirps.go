@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sort"
 	"time"
 
 	"github.com/google/uuid"
@@ -79,6 +80,7 @@ func (cfg *apiConfig) handleCreateChirp(w http.ResponseWriter, r *http.Request) 
 
 func (cfg *apiConfig) handleGetChirps(w http.ResponseWriter, r *http.Request) {
 	queries := r.URL.Query()
+	sortby := queries.Get("sort")
 	author_id := queries.Get("author_id")
 	if author_id != "" {
 		author_id, err := uuid.Parse(author_id)
@@ -95,6 +97,9 @@ func (cfg *apiConfig) handleGetChirps(w http.ResponseWriter, r *http.Request) {
 		}
 		chirps := make(Chirps, len(dbChirps))
 		chirps.mapDBType(&dbChirps)
+		if sortby == "desc" {
+			sort.Slice(chirps, func(i int, j int) bool { return chirps[i].CreatedAt.After(chirps[j].CreatedAt) })
+		}
 		respondWithJSON(w, 200, chirps)
 		return
 	} else {
@@ -106,6 +111,9 @@ func (cfg *apiConfig) handleGetChirps(w http.ResponseWriter, r *http.Request) {
 		}
 		chirps := make(Chirps, len(dbChirps))
 		chirps.mapDBType(&dbChirps)
+		if sortby == "desc" {
+			sort.Slice(chirps, func(i int, j int) bool { return chirps[i].CreatedAt.After(chirps[j].CreatedAt) })
+		}
 		respondWithJSON(w, 200, chirps)
 		return
 	}
