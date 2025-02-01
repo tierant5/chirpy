@@ -78,15 +78,37 @@ func (cfg *apiConfig) handleCreateChirp(w http.ResponseWriter, r *http.Request) 
 }
 
 func (cfg *apiConfig) handleGetChirps(w http.ResponseWriter, r *http.Request) {
-	dbChirps, err := cfg.dbQueries.GetAllChirps(r.Context())
-	if err != nil {
-		msg := "Error getting Chirps from database"
-		respondWithError(w, 400, msg, err)
+	queries := r.URL.Query()
+	author_id := queries.Get("author_id")
+	if author_id != "" {
+		author_id, err := uuid.Parse(author_id)
+		if err != nil {
+			msg := "Error parsing author_id"
+			respondWithError(w, 400, msg, err)
+			return
+		}
+		dbChirps, err := cfg.dbQueries.GetAllChirpsByAuthor(r.Context(), author_id)
+		if err != nil {
+			msg := "Error getting Chirps from database"
+			respondWithError(w, 400, msg, err)
+			return
+		}
+		chirps := make(Chirps, len(dbChirps))
+		chirps.mapDBType(&dbChirps)
+		respondWithJSON(w, 200, chirps)
+		return
+	} else {
+		dbChirps, err := cfg.dbQueries.GetAllChirps(r.Context())
+		if err != nil {
+			msg := "Error getting Chirps from database"
+			respondWithError(w, 400, msg, err)
+			return
+		}
+		chirps := make(Chirps, len(dbChirps))
+		chirps.mapDBType(&dbChirps)
+		respondWithJSON(w, 200, chirps)
 		return
 	}
-	chirps := make(Chirps, len(dbChirps))
-	chirps.mapDBType(&dbChirps)
-	respondWithJSON(w, 200, chirps)
 }
 
 func (cfg *apiConfig) handleGetChirpByID(w http.ResponseWriter, r *http.Request) {
