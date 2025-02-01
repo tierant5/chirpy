@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/tierant5/chirpy/internal/auth"
 	"github.com/tierant5/chirpy/internal/database"
 )
 
@@ -16,9 +17,18 @@ type PolkaWebhook struct {
 }
 
 func (cfg *apiConfig) handlePolkaWebhook(w http.ResponseWriter, r *http.Request) {
+	apiKey, err := auth.GetAPIKey(r.Header)
+	if err != nil {
+		respondWithError(w, 401, "no api key found", err)
+		return
+	}
+	if apiKey != cfg.polkaKey {
+		respondWithError(w, 401, "invalid api key", err)
+		return
+	}
 	decoder := json.NewDecoder(r.Body)
 	var polkaWebhook PolkaWebhook
-	err := decoder.Decode(&polkaWebhook)
+	err = decoder.Decode(&polkaWebhook)
 	if err != nil {
 		msg := "error decoding webhook body"
 		respondWithError(w, 400, msg, err)

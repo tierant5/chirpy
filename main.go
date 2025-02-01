@@ -17,6 +17,7 @@ type apiConfig struct {
 	dbQueries      *database.Queries
 	platform       string
 	signingToken   string
+	polkaKey       string
 }
 
 func main() {
@@ -24,6 +25,7 @@ func main() {
 	dbURL := os.Getenv("DB_URL")
 	platform := os.Getenv("PLATFORM")
 	signingToken := os.Getenv("SIGNING_TOKEN")
+	polkaKey := os.Getenv("POLKA_KEY")
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		log.Fatal(err)
@@ -34,6 +36,7 @@ func main() {
 		dbQueries:    database.New(db),
 		platform:     platform,
 		signingToken: signingToken,
+		polkaKey:     polkaKey,
 	}
 
 	mux := http.NewServeMux()
