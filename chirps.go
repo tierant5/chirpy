@@ -82,6 +82,7 @@ func (cfg *apiConfig) handleGetChirps(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		msg := "Error getting Chirps from database"
 		respondWithError(w, 400, msg, err)
+		return
 	}
 	chirps := make(Chirps, len(dbChirps))
 	chirps.mapDBType(&dbChirps)
@@ -93,13 +94,57 @@ func (cfg *apiConfig) handleGetChirpByID(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		msg := "Error parsing chirpID"
 		respondWithError(w, 400, msg, err)
+		return
 	}
 	dbChirp, err := cfg.dbQueries.GetChirpByID(r.Context(), chirpID)
 	if err != nil {
 		msg := fmt.Sprintf("Error getting chirpID: %v from the database", chirpID)
 		respondWithError(w, 404, msg, err)
+		return
 	}
 	chirp := Chirp{}
 	chirp.mapDBType(&dbChirp)
 	respondWithJSON(w, 200, chirp)
+}
+
+func (cfg *apiConfig) handleDeleteChirpByID(w http.ResponseWriter, r *http.Request) {
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		msg := "token not found"
+		respondWithError(w, 401, msg, err)
+		return
+	}
+	userID, err := auth.ValidateJWT(token, cfg.signingToken)
+	if err != nil {
+		msg := "invalid token"
+		respondWithError(w, 401, msg, err)
+		return
+	}
+
+	chirpID, err := uuid.Parse(r.PathValue("chirpID"))
+	if err != nil {
+		msg := "Error parsing chirpID"
+		respondWithError(w, 400, msg, err)
+		return
+	}
+	dbChirp, err := cfg.dbQueries.GetChirpByID(r.Context(), chirpID)
+	if err != nil {
+		msg := fmt.Sprintf("Error getting chirpID: %v from the database", chirpID)
+		respondWithError(w, 404, msg, err)
+		return
+	}
+
+	if userID != dbChirp.UserID {
+		msg := "user is not the owner"
+		respondWithError(w, 403, msg, nil)
+		return
+	}
+
+	err = cfg.dbQueries.DeleteChirpByID(r.Context(), chirpID)
+	if err != nil {
+		msg := "error removing chirp from database"
+		respondWithError(w, 400, msg, err)
+		return
+	}
+	respondWithJSON(w, 204, struct{}{})
 }

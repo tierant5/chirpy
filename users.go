@@ -11,11 +11,12 @@ import (
 )
 
 type User struct {
-	ID        uuid.UUID `json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Email     string    `json:"email"`
-	Password  string    `json:"password"`
+	ID          uuid.UUID `json:"id"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+	Email       string    `json:"email"`
+	Password    string    `json:"password"`
+	IsChirpyRed bool      `json:"is_chirpy_red"`
 }
 
 type AuthUser struct {
@@ -25,6 +26,7 @@ type AuthUser struct {
 	Email        string    `json:"email"`
 	Token        string    `json:"token"`
 	RefreshToken string    `json:"refresh_token"`
+	IsChirpyRed  bool      `json:"is_chirpy_red"`
 }
 
 func (u *User) mapDBType(d *database.User) {
@@ -32,6 +34,7 @@ func (u *User) mapDBType(d *database.User) {
 	u.CreatedAt = d.CreatedAt
 	u.UpdatedAt = d.UpdatedAt
 	u.Email = d.Email
+	u.IsChirpyRed = d.IsChirpyRed
 }
 
 func (u *AuthUser) mapDBType(d *database.User) {
@@ -39,6 +42,7 @@ func (u *AuthUser) mapDBType(d *database.User) {
 	u.CreatedAt = d.CreatedAt
 	u.UpdatedAt = d.UpdatedAt
 	u.Email = d.Email
+	u.IsChirpyRed = d.IsChirpyRed
 }
 
 func (cfg *apiConfig) handleUsersPost(w http.ResponseWriter, r *http.Request) {
